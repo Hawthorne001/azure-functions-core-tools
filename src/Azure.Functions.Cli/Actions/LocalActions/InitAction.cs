@@ -399,6 +399,15 @@ namespace Azure.Functions.Cli.Actions.LocalActions
 
         private static async Task WriteDockerfile(WorkerRuntime workerRuntime, string language, string targetFramework, bool csx)
         {
+            if (WorkerRuntimeLanguageHelper.IsDotnet(workerRuntime) && string.IsNullOrEmpty(targetFramework) && !csx)
+            {
+                var functionAppRoot = ScriptHostHelpers.GetFunctionAppRootDirectory(Environment.CurrentDirectory);
+                if (functionAppRoot != null)
+                {
+                    targetFramework = await DotnetHelpers.DetermineTargetFramework(functionAppRoot);
+                }
+            }
+
             if (workerRuntime == Helpers.WorkerRuntime.dotnet)
             {
                 if (csx)
@@ -423,6 +432,10 @@ namespace Azure.Functions.Cli.Actions.LocalActions
                 else if (targetFramework == Common.TargetFramework.net8)
                 {
                     await FileSystemHelpers.WriteFileIfNotExists("Dockerfile", await StaticResources.DockerfileDotnet8Isolated);
+                }
+                else if (targetFramework == Common.TargetFramework.net9)
+                {
+                    await FileSystemHelpers.WriteFileIfNotExists("Dockerfile", await StaticResources.DockerfileDotnet9Isolated);
                 }
                 else
                 {
